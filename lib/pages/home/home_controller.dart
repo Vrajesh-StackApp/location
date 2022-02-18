@@ -1,16 +1,15 @@
 import 'dart:async';
-import 'dart:math';
-
-import 'package:google_api_headers/google_api_headers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_google_places/flutter_google_places.dart';
-import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:location/app/constants/constants.dart';
+import 'package:location/app/constants/image_constatnts.dart';
+import 'package:location/data/item/map_image.dart';
 
-class HomeController extends GetxController{
+class HomeController extends GetxController with GetSingleTickerProviderStateMixin{
+
+  final Completer<GoogleMapController> googleCompleter = Completer();
+  TextEditingController searchController = TextEditingController();
 
   RxDouble latitude = 0.0.obs;
   RxDouble longitude = 0.0.obs;
@@ -18,14 +17,26 @@ class HomeController extends GetxController{
   Rx<MapType>? currentMapType = Rx(MapType.normal);
   Set<Marker> markers = {};
 
+  RxList<MapImage> mapImageList = <MapImage>[].obs;
+  RxInt selectedMapIndex = 0.obs;
+
   @override
   void onInit() {
     getLocation();
+    addMapImage();
     super.onInit();
+  }
+  
+  addMapImage(){
+    mapImageList.value = [
+      MapImage(imagePath: ImageConstants.googleDefaultIcon,mapType: MapType.normal),
+      MapImage(imagePath: ImageConstants.googleSatelliteIcon,mapType: MapType.hybrid),
+      MapImage(imagePath: ImageConstants.googleTrafficIcon,mapType: MapType.terrain),
+    ];
   }
 
   onMapTypeButtonPressed(MapType mapType) {
-    currentMapType?.value = mapType;
+    currentMapType!.value = mapType;
   }
 
   getLocation() async {
