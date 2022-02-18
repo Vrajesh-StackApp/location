@@ -26,7 +26,7 @@ class HomeController extends GetxController with GetSingleTickerProviderStateMix
     addMapImage();
     super.onInit();
   }
-  
+
   addMapImage(){
     mapImageList.value = [
       MapImage(imagePath: ImageConstants.googleDefaultIcon,mapType: MapType.normal),

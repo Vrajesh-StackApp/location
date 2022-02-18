@@ -45,7 +45,7 @@ class HomePage extends GetView<HomeController> {
             const SizedBox(height: 10),
             Column(
               children: [
-                Container(
+                /*Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   decoration: BoxDecoration(
@@ -69,7 +69,7 @@ class HomePage extends GetView<HomeController> {
                       contentPadding: EdgeInsets.only(left: 8.0, top: 16.0),
                     ),
                   ),
-                ),
+                ),*/
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.topRight,
@@ -96,25 +96,35 @@ class HomePage extends GetView<HomeController> {
   openBottomSheet() {
     return Get.bottomSheet(
       SizedBox(
-        height: 200,
+        height: 120,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GridView.builder(
             itemCount: controller.mapImageList.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
             itemBuilder: (context, index) {
-
               return Obx(() => GestureDetector(
-                onTap: (){
-                  controller.selectedMapIndex.value = index;
-                  controller.onMapTypeButtonPressed(controller.mapImageList[index].mapType!);
-                  Navigator.pop(context);
-                },
-                child: Container(
-                  color: index == controller.selectedMapIndex.value ? AppTheme.colorPrimary : Colors.transparent,
-                  child: Image.asset(controller.mapImageList[index].imagePath!),
-                ),
-              ));
+                    onTap: () {
+                      controller.selectedMapIndex.value = index;
+                      controller.onMapTypeButtonPressed(controller.mapImageList[index].mapType!);
+                      Navigator.pop(context);
+                    },
+                    child: Stack(
+                      children: [
+                        Center(
+                          child: Container(
+                            height: 52,
+                            width: 52,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8.0),
+                              color: index == controller.selectedMapIndex.value ? AppTheme.colorPrimary : Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        Center(child: Image.asset(controller.mapImageList[index].imagePath!)),
+                      ],
+                    ),
+                  ));
             },
           ),
         ),
