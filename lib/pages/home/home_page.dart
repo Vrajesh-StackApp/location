@@ -95,8 +95,8 @@ class HomePage extends GetView<HomeController> {
 
   openBottomSheet() {
     return Get.bottomSheet(
-      SizedBox(
-        height: 120,
+      FractionallySizedBox(
+        heightFactor: 0.35,
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GridView.builder(
