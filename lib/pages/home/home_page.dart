@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/app/constants/constants.dart';
 import 'package:location/app/theme/app_theme.dart';
 import 'package:location/app/widget/common_loader.dart';
 import 'package:location/pages/home/home_controller.dart';
@@ -32,8 +33,9 @@ class HomePage extends GetView<HomeController> {
       ? Stack(
           children: [
             GoogleMap(
-              markers: controller.markers,
+              markers: Set<Marker>.of(controller.markers.value.values),
               mapType: controller.currentMapType!.value,
+              polylines: Set<Polyline>.of(controller.polyLines.value.values),
               myLocationEnabled: true,
               mapToolbarEnabled: true,
               compassEnabled: false,
@@ -45,31 +47,78 @@ class HomePage extends GetView<HomeController> {
             const SizedBox(height: 10),
             Column(
               children: [
-                /*Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: TextField(
-                    controller: controller.searchController,
-                    onTap: () {
-                      debugPrint("_handlePressButton ==>");
-                    },
-                    textInputAction: TextInputAction.search,
-                    keyboardType: TextInputType.streetAddress,
-                    decoration: const InputDecoration(
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.grey,
+                Container(
+                  padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      commonMapTextFormFiled(
+                          labelText: Constants.sourceLocation,
+                          icon: (Icons.adjust_rounded),
+                          iconColor: AppTheme.colorPrimary,
+                          controller: controller.startAddressController,
+                          focusNode: controller.startAddressFocusNode.value,
+                          function: () {
+                            FocusScope.of(Get.context!).requestFocus(FocusNode());
+                            controller.openPlacePicker();
+                          },
+                          onSaved: (String value) {
+                            controller.startAddress.value = value;
+                          }),
+                      const SizedBox(height: 10),
+                      commonMapTextFormFiled(
+                        labelText: Constants.destination,
+                        icon: (Icons.location_on),
+                        iconColor: AppTheme.colorPrimary,
+                        controller: controller.destinationAddressController,
+                        focusNode: controller.destinationAddressFocusNode.value,
+                        function: () {
+                          FocusScope.of(Get.context!).requestFocus(FocusNode());
+                          controller.openPlacePicker2();
+                        },
+                        onSaved: (String value) {
+                          controller.destinationAddress.value = value;
+                        },
                       ),
-                      hintText: "Search here",
-                      border: OutlineInputBorder(borderSide: BorderSide(color: AppTheme.colorPrimary)),
-                      contentPadding: EdgeInsets.only(left: 8.0, top: 16.0),
+                    ],
+                  ),
+                ),
+                controller.placeDistance.value.isNotEmpty
+                    ? Text(
+                        '${Constants.distance} : ${controller.placeDistance.value} km',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : Container(),
+                Container(
+                  height: 35,
+                  decoration: BoxDecoration(color: AppTheme.colorPrimary, borderRadius: BorderRadius.circular(12)),
+                  child: MaterialButton(
+                    onPressed: (controller.startAddress.value != '' && controller.destinationAddress.value != '')
+                        ? () async {
+                            controller.startAddressFocusNode.value.unfocus();
+                            controller.destinationAddressFocusNode.value.unfocus();
+
+                            if (controller.markers.value.isNotEmpty) controller.markers.value.clear();
+                            if (controller.polyLines.value.isNotEmpty) controller.polyLines.value.clear();
+                            if (controller.polylineCoordinates.isNotEmpty) {
+                              controller.polylineCoordinates.clear();
+                            }
+                            controller.placeDistance.value = '';
+
+                            controller.calculateDistance();
+                          }
+                        : () {
+                            debugPrint("null receive");
+                          },
+                    child: const Text(
+                      "calculate distance",
+                      style: TextStyle(color: Colors.white),
                     ),
                   ),
-                ),*/
+                ),
                 const SizedBox(height: 10),
                 Align(
                   alignment: Alignment.topRight,
@@ -77,10 +126,10 @@ class HomePage extends GetView<HomeController> {
                     padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     child: FloatingActionButton(
                         onPressed: () {
-                          // controller.animate();
                           openBottomSheet();
                         },
                         tooltip: 'Toggle',
+                        heroTag: 'Map Types',
                         backgroundColor: AppTheme.colorPrimary,
                         child: const Icon(Icons.layers)),
                   ),
@@ -137,6 +186,59 @@ class HomePage extends GetView<HomeController> {
           topLeft: Radius.circular(30.0),
           topRight: Radius.circular(30.0),
         ),
+      ),
+    );
+  }
+
+  Widget commonMapTextFormFiled(
+      {TextEditingController? controller,
+      String? labelText,
+      IconData? icon,
+      Color? iconColor,
+      FocusNode? focusNode,
+      required Function onSaved,
+      required Function function}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 15, right: 15),
+      child: TextFormField(
+        onTap: () {
+          function();
+        },
+        enableInteractiveSelection: false,
+        decoration: InputDecoration(
+          contentPadding: EdgeInsets.zero,
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(
+              Radius.circular(10.0),
+            ),
+            borderSide: BorderSide(color: AppTheme.colorPrimary)
+          ),
+          enabledBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(10.0),
+              ),
+              borderSide: BorderSide(color: AppTheme.colorPrimary)
+          ),
+          focusedBorder: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(10.0),
+              ),
+              borderSide: BorderSide(color: AppTheme.colorPrimary)
+          ),
+          labelText: labelText,
+          fillColor: Colors.white60,
+          filled: true,
+          focusColor: AppTheme.colorPrimary,
+          labelStyle: const TextStyle(fontSize: 12,color: AppTheme.colorPrimary,),
+          prefixIcon: Icon(
+            icon,
+            color: iconColor,
+            size: 20,
+          ),
+        ),
+        controller: controller,
+        focusNode: focusNode,
+        onSaved: (newValue) => onSaved,
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'dart:math';
 class Uuid {
   final Random _random = Random();
 
-  String generateV4() {
+  String v4() {
     // Generate xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx / 8-4-4-4-12.
     final int special = 8 + _random.nextInt(4);
 
